@@ -25,7 +25,8 @@ namespace CItyInfoTut.API
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
 
             Configuration = builder.Build();
         }
@@ -42,13 +43,21 @@ namespace CItyInfoTut.API
             services.AddTransient<IMailService, CloudMailService>();
 #endif
             // Register CityInfoDbContext for dependency injection.
-            var connectionString = @"Server=(localdb)\mssqllocaldb;Database=CityInfoDB;Trusted_connection=True;";
-            var connectionString1 = @"User ID=sa;Password=SuperParola01;Server=192.168.1.13;Database=CityInfoDB;";
-            services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString1));
+
+            // This is the example given in the tutorial
+            // var connectionString = @"Server=(localdb)\mssqllocaldb;Database=CityInfoDB;Trusted_connection=True;";
+
+            // This is the connection string at home. Find the IP by running: $ ipconfig getifaddr en0 .
+            var connectionString = Startup.Configuration["connectionStrings:cityInfoDBConnectionString"];
+            //var connectionString = Startup.Configuration["cityInfoDBConnectionString"];
+
+			// This is the connection at work. Find the IP by running: $ ipconfig getifaddr en0 .
+			//var connectionString = @"User ID=sa;Password=SuperParola01;Server=10.28.109.29;Database=CityInfoDB;";
+			services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, CityInfoContext cityInfoContext)
         {
             loggerFactory.AddConsole();
             loggerFactory.AddDebug();
@@ -61,6 +70,8 @@ namespace CItyInfoTut.API
             else {
                 app.UseExceptionHandler();
             }
+
+            cityInfoContext.EnsureSeedDataForContext();
 
             app.UseStatusCodePages();
 
