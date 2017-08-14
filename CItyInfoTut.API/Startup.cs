@@ -54,6 +54,9 @@ namespace CItyInfoTut.API
 			// This is the connection at work. Find the IP by running: $ ipconfig getifaddr en0 .
 			//var connectionString = @"User ID=sa;Password=SuperParola01;Server=10.28.109.29;Database=CityInfoDB;";
 			services.AddDbContext<CityInfoContext>(o => o.UseSqlServer(connectionString));
+
+            // Register our DB Repository.
+            services.AddScoped<ICityInfoRepository, CityInfoRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,6 +77,10 @@ namespace CItyInfoTut.API
             cityInfoContext.EnsureSeedDataForContext();
 
             app.UseStatusCodePages();
+
+            AutoMapper.Mapper.Initialize(cfg => {
+                cfg.CreateMap<Entities.City, Models.CityWithoutPointsOfInterestDTO>();
+            });
 
             app.UseMvc();
 
